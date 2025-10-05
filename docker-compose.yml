@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # MySQL Database for source data (OLTP)
+  mysql-source:
+    image: mysql:9.4.0
+    container_name: mysql-source
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: financedata
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: rootpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_source_data:/var/lib/mysql
+      - ./sql/source_init:/docker-entrypoint-initdb.d
+    networks:
+      - datawarehouse_network
+
+  # MySQL Database for data warehouse (OLAP)
+  mysql-warehouse:
+    image: mysql:9.4.0
+    container_name: mysql-warehouse
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: warehouse_db
+      MYSQL_USER: warehouse_user
+      MYSQL_PASSWORD: rootpass
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_warehouse_data:/var/lib/mysql
+      - ./sql/warehouse_init:/docker-entrypoint-initdb.d
+    networks:
+      - datawarehouse_network
+
+
+
+
+
+volumes:
+  mysql_source_data:
+  mysql_warehouse_data:
+
+networks:
+  datawarehouse_network:
+    driver: bridge
