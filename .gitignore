@@ -2,7 +2,6 @@
 
 # Large SQL dataset files (add your own locally)
 sql/source_init/*.sql
-sql/warehouse_init/*.sql
 
 # Docker volumes
 mysql_source_data/
