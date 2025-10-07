@@ -19,6 +19,10 @@ build/
 venv/
 env/
 
+# Web
+node_modules/
+package-lock.json
+
 # IDE
 .vscode/
 .idea/
@@ -34,3 +38,6 @@ Thumbs.db
 logs/
 config.json
 /sessions
+
+# dotenv environment variables file
+.env
