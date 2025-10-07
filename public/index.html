@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Warehouse Analytics Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Left Sidebar (15%) -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Dashboard</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active">
+                        <a href="#overview">
+                            <span class="icon">📊</span>
+                            <span>Overview</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#analytics">
+                            <span class="icon">📈</span>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#reports">
+                            <span class="icon">📄</span>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#settings">
+                            <span class="icon">⚙️</span>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <p>Powered by Python & Node.js</p>
+            </div>
+        </aside>
+
+        <!-- Main Content (85%) -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Financial Data Analysis</h1>
+                <p class="subtitle">Data processed using Pandas & NumPy</p>
+            </header>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: rgba(75, 192, 192, 0.2);">📈</div>
+                    <div class="stat-content">
+                        <h3 id="avg-revenue">Loading...</h3>
+                        <p>Avg Revenue</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: rgba(255, 99, 132, 0.2);">💰</div>
+                    <div class="stat-content">
+                        <h3 id="avg-expenses">Loading...</h3>
+                        <p>Avg Expenses</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: rgba(54, 162, 235, 0.2);">💵</div>
+                    <div class="stat-content">
+                        <h3 id="avg-profit">Loading...</h3>
+                        <p>Avg Profit</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: rgba(153, 102, 255, 0.2);">📊</div>
+                    <div class="stat-content">
+                        <h3 id="data-points">Loading...</h3>
+                        <p>Data Points</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart Container -->
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h2>30-Day Financial Trend</h2>
+                    <div class="chart-controls">
+                        <button class="btn btn-primary" id="refresh-btn">🔄 Refresh Data</button>
+                    </div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="data-table-container">
+                <div class="table-header">
+                    <h2>Statistical Summary</h2>
+                </div>
+                <div class="table-wrapper">
+                    <table id="stats-table">
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Mean</th>
+                                <th>Median</th>
+                                <th>Std Dev</th>
+                                <th>Min</th>
+                                <th>Max</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stats-body">
+                            <tr>
+                                <td colspan="6" class="loading">Loading statistics...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>

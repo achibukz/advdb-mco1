@@ -1,9 +1,6 @@
 # Data Warehouse Project
 
-A MySQL-based3. **Connect to source database:**
-   ```bash
-   mysql -h localhost -P 3306 -u app_user -prootpass financedata
-   ```a warehouse project using Docker for containerization.
+A MySQL-based data warehouse project using Docker for containerization.
 
 ## Project Structure
 
@@ -116,3 +113,58 @@ To remove volumes (will delete all data):
 docker-compose down -v
 ```
 
+---
+
+## Web Application Setup
+
+### Step 1: Create Python Virtual Environment
+
+```cmd
+python -m venv .venv
+```
+
+Activate the virtual environment:
+```cmd
+.venv\Scripts\activate
+```
+
+### Step 2: Install Python Packages
+
+```cmd
+pip install -r python\requirements.txt
+```
+
+**Python packages include:**
+- pandas (data manipulation)
+- numpy (numerical computing)
+
+### Step 3: Generate Sample Data
+
+```cmd
+python python\generate_sample_data.py
+```
+
+This creates `public/data/sample_data.json` with:
+- 30 days of financial data (Revenue, Expenses, Profit)
+- Statistical analysis (mean, median, std, min, max)
+
+### Step 4: View the Dashboard
+
+**Option A: Simple (just open in browser)**
+```cmd
+start public\index.html
+```
+
+**Option B: Using Node.js server**
+```cmd
+npm install
+npx http-server public -p 8000
+```
+
+### Troubleshooting
+
+**"ModuleNotFoundError: No module named 'pandas'"**
+→ Run: `pip install -r python\requirements.txt`
+
+**"Failed to load data"**
+→ Run `python python\generate_sample_data.py` or use the fallback data in `script.js`
