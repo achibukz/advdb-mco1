@@ -32,10 +32,12 @@ CREATE TABLE DimClientAccount (
     client_id INT,
     account_id INT,
     type TEXT,
-    district_id INT,
+    distCli_id INT,
+    distAcc_id INT,
     date_id INT,
     frequency TEXT,
-    FOREIGN KEY (district_id) REFERENCES DimDistrict(district_id),
+    FOREIGN KEY (distCli_id) REFERENCES DimDistrict(district_id),
+    FOREIGN KEY (distAcc_id) REFERENCES DimDistrict(district_id),
     FOREIGN KEY (date_id) REFERENCES DimDate(date_id)
 );
 
