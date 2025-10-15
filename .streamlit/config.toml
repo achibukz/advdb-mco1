@@ -1,0 +1,5 @@
+[theme]
+primaryColor = "#225A8C"  # Green
+backgroundColor = "#FBF7F5"  # Light gray
+secondaryBackgroundColor = "#E1ECF7"  # White
+textColor = "#202020"  # Black
