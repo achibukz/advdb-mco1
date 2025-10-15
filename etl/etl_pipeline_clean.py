@@ -221,7 +221,7 @@ def load_dim_client_account(source_conn, warehouse_conn):
             # Join client and account data
             client_account_query = """
             SELECT a.account_id, c.client_id, a.frequency, a.newdate,
-                   c.district_id, d.type
+                   c.district_id
             FROM account a
             JOIN disp d ON a.account_id = d.account_id
             JOIN client c ON d.client_id = c.client_id
@@ -238,21 +238,21 @@ def load_dim_client_account(source_conn, warehouse_conn):
             
             # Process client account data
             client_account_records = []
-            for i, (account_id, client_id, frequency, account_date, district_id, disp_type) in enumerate(client_accounts, 1):
+            for i, (account_id, client_id, frequency, account_date, district_id) in enumerate(client_accounts, 1):
                 date_key = str(account_date) if account_date else None
                 date_id = date_mappings.get(date_key, 1)
                 
                 client_account_records.append((
-                    i, client_id, account_id, disp_type,
+                    i, client_id, account_id,
                     district_id, district_id, date_id,
                     frequency if frequency else 'UNKNOWN'
                 ))
             
             insert_query = """
             INSERT INTO DimClientAccount (
-                clientAcc_id, client_id, account_id, type, 
+                clientAcc_id, client_id, account_id, 
                 distCli_id, distAcc_id, date_id, frequency
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s)
             """
             warehouse_cursor.executemany(insert_query, client_account_records)
             warehouse_conn.commit()
