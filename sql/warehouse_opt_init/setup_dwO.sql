@@ -31,6 +31,7 @@ CREATE TABLE DimClientAccount (
     clientAcc_id INT PRIMARY KEY,
     client_id INT,
     account_id INT,
+    type TEXT,
     distCli_id INT,
     distAcc_id INT,
     date_id INT,
