@@ -18,6 +18,7 @@ dist/
 build/
 venv/
 env/
+.venv/
 
 # Web
 node_modules/

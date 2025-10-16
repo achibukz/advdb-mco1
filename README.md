@@ -117,8 +117,44 @@ docker-compose down -v
 
 ## Web Application Setup
 
-### Step 1: Create Python Virtual Environment
+### Quick Start (Automated)
 
+**Prerequisites:**
+1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and **start it**
+2. Install Python 3.8 or higher
+3. Ensure the database is set up (see "Getting Started" section above)
+
+**Run the dashboard:**
+```cmd
+run
+```
+or
+```cmd
+run.bat
+```
+
+The `run.bat` script will automatically:
+- Check if Docker Desktop is running
+- Create virtual environment (if needed)
+- Install dependencies (if needed)
+- Start Docker containers (if needed)
+- Launch the Streamlit dashboard
+
+---
+
+### Manual Setup (Optional)
+
+If you prefer to set up manually:
+
+#### Step 1: Start Docker Desktop
+Make sure Docker Desktop is running before proceeding.
+
+#### Step 2: Start Docker Containers
+```cmd
+docker-compose up -d
+```
+
+#### Step 3: Create Python Virtual Environment
 ```cmd
 python -m venv .venv
 ```
@@ -128,43 +164,12 @@ Activate the virtual environment:
 .venv\Scripts\activate
 ```
 
-### Step 2: Install Python Packages
-
+#### Step 4: Install Python Packages
 ```cmd
 pip install -r python\requirements.txt
 ```
 
-**Python packages include:**
-- pandas (data manipulation)
-- numpy (numerical computing)
-
-### Step 3: Generate Sample Data
-
+#### Step 5: Run the Streamlit Application
 ```cmd
-python python\generate_sample_data.py
+streamlit run python\app.py
 ```
-
-This creates `public/data/sample_data.json` with:
-- 30 days of financial data (Revenue, Expenses, Profit)
-- Statistical analysis (mean, median, std, min, max)
-
-### Step 4: View the Dashboard
-
-**Option A: Simple (just open in browser)**
-```cmd
-start public\index.html
-```
-
-**Option B: Using Node.js server**
-```cmd
-npm install
-npx http-server public -p 8000
-```
-
-### Troubleshooting
-
-**"ModuleNotFoundError: No module named 'pandas'"**
-→ Run: `pip install -r python\requirements.txt`
-
-**"Failed to load data"**
-→ Run `python python\generate_sample_data.py` or use the fallback data in `script.js`
