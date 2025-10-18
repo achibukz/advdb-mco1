@@ -26,16 +26,23 @@ def fetch_data(query):
 st.set_page_config(layout="wide")
 
 # Title and Sidebar
-st.title("Financial Dataset Dashboard")
+st.title("Financial Reports Dashboard")
 st.sidebar.header("Choose data to view:")
-report_category = st.sidebar.selectbox("Select Report to View:", ["Loan Amount Trend", "Number of Payments and Total Amount", "Transactions by Operation"])
+report_category = st.sidebar.selectbox("Select Report to View:", 
+                ["Loan Amount Trend",
+                 "Location Net Cash Flow", 
+                 "Number of Payments and Total Amount", 
+                 ])
 
 # Dynamic filter based on report category
 if report_category == "Loan Amount Trend":
     filter_option = st.sidebar.selectbox("Year:", ["All Years", "1993", "1994", "1995", "1996", "1997", "1998"])
+elif report_category == "Location Net Cash Flow":
+    filter_option = st.sidebar.selectbox("Region:", ["All Regions", "Prague", "central Bohemia", "south Bohemia", "west Bohemia", "north Bohemia", "east Bohemia", "south Moravia", "north Moravia"])   
 elif report_category == "Number of Payments and Total Amount":
     filter_option = st.sidebar.selectbox("Year:", ["All Years", "1993", "1994", "1995", "1996", "1997", "1998"])
     filter_option2 = st.sidebar.selectbox("Card Type:", ["All Cards", "Junior", "Classic", "Gold"])
+ 
 
 st.sidebar.markdown("---")  # Adds a horizontal line for separation
 st.sidebar.markdown("Balcita, Bukuhan, Cu, Dimaunahan")
@@ -136,7 +143,58 @@ if report_category == "Loan Amount Trend":
             )
             st.altair_chart(chart, use_container_width=True)
 
-# REPORT 2 - Number of Payments and Total Amount
+# REPORT 2 - Location Net Cash Flow
+elif report_category == "Location Net Cash Flow":
+    if filter_option == "All Regions":
+        st.markdown("### No Region Selected")
+        st.info("Please select a specific region to view district net cash flow data.")
+    else:
+        # Query to get net cash flow by district for selected region
+        query = f"""
+        SELECT dist.district_name,
+               ROUND(SUM(ft.amount), 2) AS net_cash
+        FROM FactTrans ft
+        JOIN DimClientAccount ca ON ft.clientAcc_id = ca.clientAcc_id
+        JOIN DimDistrict dist ON ca.distAcc_id = dist.district_id
+        WHERE dist.region = '{filter_option}'
+        GROUP BY dist.district_name
+        ORDER BY net_cash DESC;
+        """
+        
+        data = fetch_data(query)
+        
+        if not data.empty:
+            # Convert to numeric
+            data['net_cash'] = pd.to_numeric(data['net_cash'], errors='coerce')
+            
+            # Display chart title
+            st.subheader(f"Net Cash Flow by District - {filter_option}")
+            
+            # Create horizontal bar chart with Altair
+            chart = alt.Chart(data).mark_bar().encode(
+                x=alt.X('net_cash:Q', 
+                       title='Net Cash Flow',
+                       axis=alt.Axis(format='~s')),
+                y=alt.Y('district_name:N', 
+                       title='District',
+                       sort='-x'),  # Sort by net_cash descending
+                tooltip=[
+                    alt.Tooltip('district_name:N', title='District'),
+                    alt.Tooltip('net_cash:Q', title='Net Cash Flow', format=',.2f')
+                ]
+            ).properties(
+                height=max(400, len(data) * 25)  # Dynamic height based on number of districts
+            )
+            
+            st.altair_chart(chart, use_container_width=True)
+            
+            # Display data table below
+            st.write("Detailed Data:")
+            st.dataframe(data, use_container_width=True)
+        else:
+            st.warning(f"No data available for {filter_option}.")
+
+# REPORT 3 - Number of Payments and Total Amount
 elif report_category == "Number of Payments and Total Amount":
     # Check if both filters are "All"
     if filter_option == "All Years" and filter_option2 == "All Cards":
