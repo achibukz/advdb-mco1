@@ -20,6 +20,13 @@ def fetch_data(query):
     data = cursor.fetchall()
     conn.close()
     return pd.DataFrame(data)
+
+# Fetch district names for dropdown (cached to avoid repeated queries)
+@st.cache_data
+def get_districts():
+    query = "SELECT DISTINCT district_name FROM DimDistrict ORDER BY district_name;"
+    df = fetch_data(query)
+    return ["None Selected"] + df['district_name'].tolist()
 # ------------------------------------------------
 
 # Set page config for wider layout
@@ -31,7 +38,8 @@ st.sidebar.header("Choose data to view:")
 report_category = st.sidebar.selectbox("Select Report to View:", 
                 ["Loan Amount Trend",
                  "Location Net Cash Flow", 
-                 "Number of Payments and Total Amount", 
+                 "Number of Payments and Total Amount",
+                 "Transaction Types and Volume by District"
                  ])
 
 # Dynamic filter based on report category
@@ -42,7 +50,9 @@ elif report_category == "Location Net Cash Flow":
 elif report_category == "Number of Payments and Total Amount":
     filter_option = st.sidebar.selectbox("Year:", ["All Years", "1993", "1994", "1995", "1996", "1997", "1998"])
     filter_option2 = st.sidebar.selectbox("Card Type:", ["All Cards", "Junior", "Classic", "Gold"])
- 
+elif report_category == "Transaction Types and Volume by District":
+    districts = get_districts()
+    filter_option = st.sidebar.selectbox("District:", districts)
 
 st.sidebar.markdown("---")  # Adds a horizontal line for separation
 st.sidebar.markdown("Balcita, Bukuhan, Cu, Dimaunahan")
@@ -292,14 +302,132 @@ elif report_category == "Number of Payments and Total Amount":
         else:
             st.warning("No data available for the selected filters.")
 
-# SAMPLE ONLY 
-elif report_category == "Transactions by Operation":
-    query = """
-    SELECT ft.operation AS operation_type,
-           COUNT(*) AS num_operations
-    FROM FactTrans ft
-    GROUP BY ft.operation
-    ORDER BY num_operations DESC;
-    """
-    data = fetch_data(query)
-    st.write(data)
+# REPORT 5 - Transaction Types and Volume by District
+elif report_category == "Transaction Types and Volume by District":
+    if filter_option == "None Selected":
+        st.markdown("### No District Selected")
+        st.info("Please select a specific district to view transaction type distribution.")
+    else:
+        # Create temporary table and query
+        query = f"""
+        DROP TEMPORARY TABLE IF EXISTS PreAggregatedFactTrans;
+        
+        CREATE TEMPORARY TABLE PreAggregatedFactTrans AS
+        SELECT 
+            clientAcc_id,
+            SUM(CASE WHEN operation = 'Credit in Cash' THEN 1 ELSE 0 END) AS credit_in_cash,
+            SUM(CASE WHEN operation = 'Collection from Another Bank' THEN 1 ELSE 0 END) AS collection_from_bank,
+            SUM(CASE WHEN operation = 'Withdrawal in Cash' THEN 1 ELSE 0 END) AS withdrawal_in_cash,
+            SUM(CASE WHEN operation = 'Remittance to Another Bank' THEN 1 ELSE 0 END) AS remittance_to_bank,
+            SUM(CASE WHEN operation = 'Credit Card Withdrawal' THEN 1 ELSE 0 END) AS credit_card_withdrawal,
+            COUNT(trans_id) AS total_transactions,
+            ROUND(AVG(amount), 2) AS avg_transaction_amount,
+            ROUND(SUM(amount), 2) AS total_money_transferred
+        FROM FactTrans
+        GROUP BY clientAcc_id;
+        
+        SELECT 
+            dd.district_name,
+            dd.region,
+            SUM(pt.credit_in_cash) AS credit_in_cash,
+            SUM(pt.collection_from_bank) AS collection_from_bank,
+            SUM(pt.withdrawal_in_cash) AS withdrawal_in_cash,
+            SUM(pt.remittance_to_bank) AS remittance_to_bank,
+            SUM(pt.credit_card_withdrawal) AS credit_card_withdrawal,
+            SUM(pt.total_transactions) AS total_transactions,
+            ROUND(AVG(pt.avg_transaction_amount), 2) AS avg_transaction_amount,
+            ROUND(SUM(pt.total_money_transferred), 2) AS total_money_transferred
+        FROM PreAggregatedFactTrans pt
+        JOIN DimClientAccount dca ON pt.clientAcc_id = dca.clientAcc_id
+        JOIN DimDistrict dd ON dca.distCli_id = dd.district_id
+        WHERE dd.district_name = '{filter_option}'
+        GROUP BY dd.district_id, dd.district_name, dd.region;
+        """
+        
+        # Execute multi-statement query
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Execute statements separately
+        statements = [s.strip() for s in query.split(';') if s.strip()]
+        
+        # Execute all statements except the last one (which is the SELECT)
+        for statement in statements[:-1]:
+            cursor.execute(statement)
+            try:
+                cursor.fetchall()  # Consume any results to avoid "Unread result found" error
+            except:
+                pass  # Ignore if there are no results to fetch
+        
+        # Execute the final SELECT statement and fetch results
+        cursor.execute(statements[-1])
+        data = pd.DataFrame(cursor.fetchall())
+        
+        cursor.close()
+        conn.close()
+        
+        if not data.empty and len(data) > 0:
+            row = data.iloc[0]
+            
+            # Display summary information
+            st.subheader(f"Transaction Distribution - {filter_option}")
+            st.write(f"**Region:** {row['region']}")
+            st.write(f"**Total Transactions:** {int(row['total_transactions']):,}")
+            st.write(f"**Average Transaction Amount:** ${row['avg_transaction_amount']:,.2f}")
+            st.write(f"**Total Money Transferred:** ${row['total_money_transferred']:,.2f}")
+            
+            st.markdown("---")
+            
+            # Prepare data for pie chart
+            operations_data = pd.DataFrame({
+                'Operation Type': [
+                    'Credit in Cash',
+                    'Collection from Another Bank',
+                    'Withdrawal in Cash',
+                    'Remittance to Another Bank',
+                    'Credit Card Withdrawal'
+                ],
+                'Count': [
+                    int(row['credit_in_cash']),
+                    int(row['collection_from_bank']),
+                    int(row['withdrawal_in_cash']),
+                    int(row['remittance_to_bank']),
+                    int(row['credit_card_withdrawal'])
+                ]
+            })
+            
+            # Filter out operations with 0 count
+            operations_data = operations_data[operations_data['Count'] > 0]
+            
+            if not operations_data.empty:
+                # Calculate percentage for each operation
+                operations_data['Percentage'] = (operations_data['Count'] / operations_data['Count'].sum() * 100).round(2)
+                
+                # Create pie chart with Altair
+                chart = alt.Chart(operations_data).mark_arc(innerRadius=50).encode(
+                    theta=alt.Theta('Count:Q', stack=True),
+                    color=alt.Color('Operation Type:N', 
+                                   legend=alt.Legend(title="Transaction Type")),
+                    tooltip=[
+                        alt.Tooltip('Operation Type:N', title='Transaction Type'),
+                        alt.Tooltip('Count:Q', title='Number of Transactions', format=','),
+                        alt.Tooltip('Percentage:Q', title='Percentage', format='.2f')
+                    ]
+                ).properties(
+                    height=500,
+                    title=f"Transaction Type Distribution"
+                )
+                
+                st.altair_chart(chart, use_container_width=True)
+                
+                # Display operations breakdown table
+                st.write("Transaction Breakdown:")
+                operations_data['Percentage_Display'] = operations_data['Percentage'].astype(str) + '%'
+                display_data = operations_data[['Operation Type', 'Count', 'Percentage_Display']].copy()
+                display_data.columns = ['Operation Type', 'Count', 'Percentage']
+                st.dataframe(display_data, use_container_width=True)
+            else:
+                st.warning("No transaction operations recorded for this district.")
+        else:
+            st.warning(f"No data available for {filter_option}.")
+
