@@ -61,7 +61,6 @@ CREATE TABLE FactTrans (
     type TEXT,
     operation TEXT,
     k_symbol TEXT,
-    bank TEXT,
     amount DOUBLE,
     balance DOUBLE,
     FOREIGN KEY (clientAcc_id) REFERENCES DimClientAccount(clientAcc_id),

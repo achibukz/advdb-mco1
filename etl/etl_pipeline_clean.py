@@ -322,7 +322,7 @@ def load_fact_trans(source_conn, warehouse_conn):
         with source_conn.cursor() as source_cursor:
             trans_query = """
             SELECT trans_id, account_id, newdate, type, operation,
-                   amount, balance, k_symbol, bank, account
+                   amount, balance, k_symbol, account
             FROM trans
             ORDER BY trans_id
             """
@@ -340,7 +340,7 @@ def load_fact_trans(source_conn, warehouse_conn):
             # Process transaction data
             trans_records = []
             for (trans_id, account_id, trans_date, trans_type, operation, 
-                 amount, balance, k_symbol, bank, account) in transactions:
+                 amount, balance, k_symbol, account) in transactions:
                 
                 clientAcc_id = client_account_mappings.get(account_id)
                 if not clientAcc_id:
@@ -362,7 +362,6 @@ def load_fact_trans(source_conn, warehouse_conn):
                     trans_type if trans_type else 'UNKNOWN',
                     operation if operation and operation != 'UNKNOWN' else None,
                     k_symbol if k_symbol else '',
-                    bank if bank else '',
                     float(amount) if amount else 0.0,
                     float(balance) if balance else 0.0
                 ))
@@ -370,8 +369,8 @@ def load_fact_trans(source_conn, warehouse_conn):
             insert_query = """
             INSERT INTO FactTrans (
                 trans_id, clientAcc_id, date_id, account, type, operation,
-                k_symbol, bank, amount, balance
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                k_symbol, amount, balance
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             warehouse_cursor.executemany(insert_query, trans_records)
             warehouse_conn.commit()
