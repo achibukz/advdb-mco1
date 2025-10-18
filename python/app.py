@@ -32,6 +32,22 @@ def get_districts():
 # Set page config for wider layout
 st.set_page_config(layout="wide")
 
+# Custom CSS to adjust sidebar width
+st.markdown(
+    """
+    <style>
+        [data-testid="stSidebar"][aria-expanded="true"]{
+            min-width: 380px;
+        }
+        [data-testid="stSidebar"][aria-expanded="false"]{
+            min-width: 380px;
+            margin-left: -380px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # Title and Sidebar
 st.title("Financial Reports Dashboard")
 st.sidebar.header("Choose data to view:")
