@@ -39,7 +39,8 @@ report_category = st.sidebar.selectbox("Select Report to View:",
                 ["Loan Amount Trend",
                  "Location Net Cash Flow", 
                  "Number of Payments and Total Amount",
-                 "Transaction Types and Volume by District"
+                 "Transaction Types and Volume by District",
+                 "Loan Status and Loan Volume by Region"
                  ])
 
 # Dynamic filter based on report category
@@ -53,6 +54,9 @@ elif report_category == "Number of Payments and Total Amount":
 elif report_category == "Transaction Types and Volume by District":
     districts = get_districts()
     filter_option = st.sidebar.selectbox("District:", districts)
+elif report_category == "Loan Status and Loan Volume by Region":
+    filter_option = None
+    filter_option2 = None
 
 st.sidebar.markdown("---")  # Adds a horizontal line for separation
 st.sidebar.markdown("Balcita, Bukuhan, Cu, Dimaunahan")
@@ -301,6 +305,94 @@ elif report_category == "Number of Payments and Total Amount":
             st.dataframe(data, use_container_width=True)
         else:
             st.warning("No data available for the selected filters.")
+
+# REPORT 4 - Loan Status and Loan Volume by Region
+elif report_category == "Loan Status and Loan Volume by Region":
+    # Query to get loan status breakdown by region
+    query = """
+    SELECT 
+        dd.region,
+        SUM(CASE WHEN fl.status = 'A' THEN 1 ELSE 0 END) AS finished_no_problems,
+        SUM(CASE WHEN fl.status = 'B' THEN 1 ELSE 0 END) AS finished_pending_payments,
+        SUM(CASE WHEN fl.status = 'C' THEN 1 ELSE 0 END) AS active_ok,
+        SUM(CASE WHEN fl.status = 'D' THEN 1 ELSE 0 END) AS active_in_debt,
+        SUM(CASE WHEN fl.status IN ('A', 'B') THEN 1 ELSE 0 END) AS total_completed,
+        SUM(CASE WHEN fl.status IN ('C', 'D') THEN 1 ELSE 0 END) AS total_ongoing,
+        COUNT(fl.loan_id) AS total_loans
+    FROM FactLoan fl
+    JOIN DimClientAccount dca ON fl.clientAcc_id = dca.clientAcc_id
+    JOIN DimDistrict dd ON dca.distCli_id = dd.district_id
+    GROUP BY dd.region
+    ORDER BY total_loans DESC;
+    """
+    
+    data = fetch_data(query)
+    
+    if not data.empty:
+        # Convert numeric columns
+        numeric_cols = ['finished_no_problems', 'finished_pending_payments', 
+                       'active_ok', 'active_in_debt', 'total_completed', 
+                       'total_ongoing', 'total_loans']
+        for col in numeric_cols:
+            data[col] = pd.to_numeric(data[col], errors='coerce')
+        
+        st.subheader("Loan Status and Volume by Region")
+        
+        # Reshape data for stacked bar chart
+        # Create a long-form dataframe for Altair
+        chart_data = pd.DataFrame()
+        for _, row in data.iterrows():
+            region = row['region']
+            chart_data = pd.concat([chart_data, pd.DataFrame({
+                'region': [region, region, region, region],
+                'status': ['Finished - No Problems', 'Finished - Pending Payments', 
+                          'Active - OK', 'Active - In Debt'],
+                'count': [row['finished_no_problems'], row['finished_pending_payments'],
+                         row['active_ok'], row['active_in_debt']]
+            })], ignore_index=True)
+        
+        # Define color scheme for loan statuses
+        color_scale = alt.Scale(
+            domain=['Finished - No Problems', 'Finished - Pending Payments', 
+                   'Active - OK', 'Active - In Debt'],
+            range=['#2ecc71', '#f39c12', '#3498db', '#e74c3c']
+        )
+        
+        # Create horizontal stacked bar chart
+        chart = alt.Chart(chart_data).mark_bar().encode(
+            x=alt.X('count:Q', 
+                   title='Number of Loans',
+                   axis=alt.Axis(format='~s')),
+            y=alt.Y('region:N', 
+                   title='Region',
+                   sort=alt.EncodingSortField(field='count', op='sum', order='descending')),
+            color=alt.Color('status:N', 
+                          title='Loan Status',
+                          scale=color_scale,
+                          legend=alt.Legend(orient='bottom')),
+            tooltip=[
+                alt.Tooltip('region:N', title='Region'),
+                alt.Tooltip('status:N', title='Status'),
+                alt.Tooltip('count:Q', title='Count', format=',')
+            ]
+        ).properties(
+            height=400
+        )
+        
+        st.altair_chart(chart, use_container_width=True)
+        
+        # Display summary statistics
+        st.write("Summary Statistics:")
+        summary_data = data[['region', 'finished_no_problems', 'finished_pending_payments', 
+                            'active_ok', 'active_in_debt', 'total_completed', 
+                            'total_ongoing', 'total_loans']].copy()
+        summary_data.columns = ['Region', 'Finished (No Problems)', 'Finished (Pending)', 
+                               'Active (OK)', 'Active (In Debt)', 'Total Completed', 
+                               'Total Ongoing', 'Total Loans']
+        st.dataframe(summary_data, use_container_width=True)
+    else:
+        st.warning("No loan data available.")
+
 
 # REPORT 5 - Transaction Types and Volume by District
 elif report_category == "Transaction Types and Volume by District":
