@@ -62,6 +62,8 @@ if errorlevel 1 (
         echo.
         echo [ERROR] Failed to start Docker containers.
         echo Please check docker-compose.yml and try again.
+        echo Check if any mysql instance is running, turn them off
+        echo in services.
         echo.
         pause
         exit /b 1
