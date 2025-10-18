@@ -157,6 +157,9 @@ if report_category == "Loan Amount Trend":
             )
             st.altair_chart(chart, use_container_width=True)
 
+            st.write("Detailed Data:")
+            st.dataframe(data, use_container_width=True)
+
 # REPORT 2 - Location Net Cash Flow
 elif report_category == "Location Net Cash Flow":
     if filter_option == "All Regions":
