@@ -360,7 +360,7 @@ def load_fact_trans(source_conn, warehouse_conn):
                 trans_records.append((
                     trans_id, clientAcc_id, date_id, account_int,
                     trans_type if trans_type else 'UNKNOWN',
-                    operation if operation else 'UNKNOWN',
+                    operation if operation and operation != 'UNKNOWN' else None,
                     k_symbol if k_symbol else '',
                     bank if bank else '',
                     float(amount) if amount else 0.0,
