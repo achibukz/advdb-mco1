@@ -81,17 +81,6 @@ CREATE TABLE FactLoan (
     FOREIGN KEY (date_id) REFERENCES DimDate(date_id)
 );
 
--- FactOrder - Order transactions fact table
-CREATE TABLE FactOrder (
-    order_id INT PRIMARY KEY,
-    clientAcc_id INT,
-    account_to INT,
-    amount DOUBLE,
-    bank_to TEXT,
-    k_symbol TEXT,
-    FOREIGN KEY (clientAcc_id) REFERENCES DimClientAccount(clientAcc_id)
-);
-
 -- SUCCESS MESSAGE
 
 SELECT 'Data Warehouse Schema Created Successfully!' as STATUS;

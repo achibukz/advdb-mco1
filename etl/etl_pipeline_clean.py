@@ -66,7 +66,6 @@ def create_warehouse_schema(warehouse_conn):
         # Drop existing tables first
         drop_tables_sql = """
         SET FOREIGN_KEY_CHECKS = 0;
-        DROP TABLE IF EXISTS FactOrder;
         DROP TABLE IF EXISTS FactLoan;
         DROP TABLE IF EXISTS FactTrans;
         DROP TABLE IF EXISTS DimCard;
@@ -440,54 +439,6 @@ def load_fact_loan(source_conn, warehouse_conn):
         warehouse_conn.rollback()
         raise
 
-def load_fact_order(source_conn, warehouse_conn):
-    """Load FactOrder fact table"""
-    logger.info("Loading FactOrder fact table...")
-    
-    try:
-        with source_conn.cursor() as source_cursor:
-            order_query = """
-            SELECT order_id, account_id, bank_to, account_to, amount, k_symbol
-            FROM orders
-            ORDER BY order_id
-            """
-            source_cursor.execute(order_query)
-            orders = source_cursor.fetchall()
-            
-        with warehouse_conn.cursor() as warehouse_cursor:
-            # Get client account mappings
-            warehouse_cursor.execute("SELECT account_id, clientAcc_id FROM DimClientAccount")
-            client_account_mappings = {account_id: clientAcc_id for account_id, clientAcc_id in warehouse_cursor.fetchall()}
-            
-            # Process order data
-            order_records = []
-            for order_id, account_id, bank_to, account_to, amount, k_symbol in orders:
-                clientAcc_id = client_account_mappings.get(account_id)
-                if not clientAcc_id:
-                    continue
-                
-                order_records.append((
-                    order_id, clientAcc_id,
-                    int(account_to) if account_to else 0,
-                    float(amount) if amount else 0.0,
-                    bank_to if bank_to else '',
-                    k_symbol if k_symbol else ''
-                ))
-            
-            insert_query = """
-            INSERT INTO FactOrder (
-                order_id, clientAcc_id, account_to, amount, bank_to, k_symbol
-            ) VALUES (%s, %s, %s, %s, %s, %s)
-            """
-            warehouse_cursor.executemany(insert_query, order_records)
-            warehouse_conn.commit()
-            logger.info(f"Loaded {len(order_records)} records into FactOrder")
-            
-    except Exception as e:
-        logger.error(f"Error loading FactOrder: {e}")
-        warehouse_conn.rollback()
-        raise
-
 def validate_data_quality(warehouse_conn):
     """Perform data quality checks on the warehouse"""
     logger.info("Performing data quality validation...")
@@ -495,7 +446,7 @@ def validate_data_quality(warehouse_conn):
     try:
         with warehouse_conn.cursor() as cursor:
             # Count records in each table
-            tables = ['DimDate', 'DimDistrict', 'DimClientAccount', 'DimCard', 'FactTrans', 'FactLoan', 'FactOrder']
+            tables = ['DimDate', 'DimDistrict', 'DimClientAccount', 'DimCard', 'FactTrans', 'FactLoan']
             for table in tables:
                 cursor.execute(f"SELECT COUNT(*) FROM {table}")
                 count = cursor.fetchone()[0]
@@ -546,7 +497,6 @@ def run_etl_pipeline():
         logger.info("Phase 2: Loading Fact Tables")
         load_fact_trans(source_conn, warehouse_conn)
         load_fact_loan(source_conn, warehouse_conn)
-        load_fact_order(source_conn, warehouse_conn)
         
         logger.info("Phase 3: Data Quality Validation")
         validate_data_quality(warehouse_conn)
