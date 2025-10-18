@@ -499,7 +499,11 @@ elif report_category == "Transaction Types and Volume by District":
                 chart = alt.Chart(operations_data).mark_arc(innerRadius=50).encode(
                     theta=alt.Theta('Count:Q', stack=True),
                     color=alt.Color('Operation Type:N', 
-                                   legend=alt.Legend(title="Transaction Type")),
+                                   legend=alt.Legend(
+                                       title="Transaction Type",
+                                       labelLimit=300,  # Increase label character limit
+                                       titleLimit=300   # Increase title character limit
+                                   )),
                     tooltip=[
                         alt.Tooltip('Operation Type:N', title='Transaction Type'),
                         alt.Tooltip('Count:Q', title='Number of Transactions', format=','),
