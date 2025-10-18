@@ -33,31 +33,12 @@ services:
     networks:
       - datawarehouse_network
 
-  # Optimized MySQL Data Warehouse with Indexes (OLAP-Optimized)
-  mysql-warehouse-opt:
-    image: mysql:9.4.0
-    container_name: mysql-warehouse-opt
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: warehouse_opt_db
-      MYSQL_USER: warehouse_user
-      MYSQL_PASSWORD: rootpass
-    ports:
-      - "3308:3306"
-    volumes:
-      - mysql_warehouse_opt_data:/var/lib/mysql
-      - ./sql/warehouse_opt_init:/docker-entrypoint-initdb.d
-    networks:
-      - datawarehouse_network
-
-
 
 
 
 volumes:
   mysql_source_data:
   mysql_warehouse_data:
-  mysql_warehouse_opt_data:
 
 networks:
   datawarehouse_network:
