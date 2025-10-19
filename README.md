@@ -35,9 +35,12 @@ A MySQL-based data warehouse project using Docker for containerization.
    # The SQL file should create and populate your source database
    ```
 
+
 2. **Start the services:**
    ```bash
+   docker-compose up -v
    docker-compose up -d
+   
    ```
 
 3. **Check if databases are running:**
