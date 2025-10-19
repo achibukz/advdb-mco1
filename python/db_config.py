@@ -3,6 +3,7 @@ Database Configuration and Connection Module
 
 This module handles all database connections for the Financial Reports Dashboard.
 It supports both local MySQL connections and Google Cloud SQL connections.
+Works with both Streamlit secrets and .env files.
 """
 
 import mysql.connector
@@ -19,31 +20,55 @@ load_dotenv()
 # Cloud SQL connector will be initialized only when needed
 _connector = None
 
+def _get_config_value(key, default=''):
+    """
+    Get configuration value from Streamlit secrets or environment variables.
+    Streamlit secrets take precedence if available.
+    
+    Args:
+        key (str): Configuration key name
+        default: Default value if key not found
+        
+    Returns:
+        Configuration value
+    """
+    try:
+        # Try to import streamlit and use secrets
+        import streamlit as st
+        if hasattr(st, 'secrets') and key in st.secrets:
+            return st.secrets[key]
+    except (ImportError, FileNotFoundError, KeyError):
+        pass
+    
+    # Fall back to environment variables
+    return os.getenv(key, default)
+
+
 # Query Cache Configuration
-CACHE_ENABLED = os.getenv('CACHE_ENABLED', 'True').lower() == 'true'
-CACHE_TTL_SECONDS = int(os.getenv('CACHE_TTL_SECONDS'))
+CACHE_ENABLED = str(_get_config_value('CACHE_ENABLED', 'True')).lower() == 'true'
+CACHE_TTL_SECONDS = int(_get_config_value('CACHE_TTL_SECONDS', '3600'))
 _query_cache = {}  # In-memory cache storage
 
 # Database Configuration
 # Choose connection method by setting USE_CLOUD_SQL environment variable
-USE_CLOUD_SQL = os.getenv('USE_CLOUD_SQL', 'False').lower() == 'true'
+USE_CLOUD_SQL = str(_get_config_value('USE_CLOUD_SQL', 'False')).lower() == 'true'
 
-# Google Cloud SQL Configuration (loaded from environment variables)
+# Google Cloud SQL Configuration (loaded from Streamlit secrets or environment variables)
 CLOUD_SQL_CONFIG = {
-    "host": os.getenv('CLOUD_DB_HOST'),
-    "port": int(os.getenv('CLOUD_DB_PORT')),
-    "user": os.getenv('CLOUD_DB_USER'),
-    "password": os.getenv('CLOUD_DB_PASSWORD'),
-    "database": os.getenv('CLOUD_DB_NAME')
+    "host": _get_config_value('CLOUD_DB_HOST'),
+    "port": int(_get_config_value('CLOUD_DB_PORT', '3306')),
+    "user": _get_config_value('CLOUD_DB_USER'),
+    "password": _get_config_value('CLOUD_DB_PASSWORD'),
+    "database": _get_config_value('CLOUD_DB_NAME')
 }
 
-# Direct IP Connection Configuration (loaded from environment variables)
+# Direct IP Connection Configuration (loaded from Streamlit secrets or environment variables)
 LOCAL_CONFIG = {
-    "host": os.getenv('LOCAL_DB_HOST'),
-    "port": int(os.getenv('LOCAL_DB_PORT')),
-    "user": os.getenv('LOCAL_DB_USER'),
-    "password": os.getenv('LOCAL_DB_PASSWORD'),
-    "database": os.getenv('LOCAL_DB_NAME')
+    "host": _get_config_value('LOCAL_DB_HOST'),
+    "port": int(_get_config_value('LOCAL_DB_PORT', '3306')),
+    "user": _get_config_value('LOCAL_DB_USER'),
+    "password": _get_config_value('LOCAL_DB_PASSWORD'),
+    "database": _get_config_value('LOCAL_DB_NAME')
 }
 
 def _generate_cache_key(query):

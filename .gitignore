@@ -30,6 +30,9 @@ package-lock.json
 *.swp
 *.swo
 
+# Streamlit
+/.streamlit/
+
 # OS
 .DS_Store
 Thumbs.db
