@@ -63,7 +63,7 @@ st.sidebar.markdown("Balcita, Bukuhan, Cu, Dimaunahan")
 st.sidebar.markdown("STADVDB S17 | Group 12")
 
 # Placeholder for the main report
-st.write("Version 1.3.1")
+st.write("Version 1.3.2")
 
 # REPORT 1
 if report_category == "Loan Amount Trend":
@@ -438,8 +438,8 @@ elif report_category == "Transaction Types and Volume by District":
             st.subheader(f"Transaction Distribution - {filter_option}")
             st.write(f"**Region:** {row['region']}")
             st.write(f"**Total Transactions:** {int(row['total_transactions']):,}")
-            st.write(f"**Average Transaction Amount:** ${row['avg_transaction_amount']:,.2f}")
-            st.write(f"**Total Money Transferred:** ${row['total_money_transferred']:,.2f}")
+            st.write(f"**Average Transaction Amount:** {row['avg_transaction_amount']:,.2f}")
+            st.write(f"**Total Money Transferred:** {row['total_money_transferred']:,.2f}")
             
             st.markdown("---")
             
