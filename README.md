@@ -40,7 +40,7 @@ A MySQL-based data warehouse project using Docker for containerization.
    ```bash
    docker-compose up -v
    docker-compose up -d
-   
+
    ```
 
 3. **Check if databases are running:**
@@ -125,24 +125,23 @@ docker-compose down -v
 **Prerequisites:**
 1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and **start it**
 2. Install Python 3.8 or higher
-3. Ensure the database is set up (see "Getting Started" section above)
+3. Create a `.env` file in the root folder with your database configuration
+4. Ensure the database is set up (see "Getting Started" section above)
 
 **Run the dashboard:**
-```cmd
-run
-```
-or
-```cmd
-run.bat
+
+Works on **all platforms** (Windows, Mac, Linux):
+```bash
+python run.py
 ```
 
-The `run.bat` script will automatically:
-- Check if Docker Desktop is running
-- Create virtual environment (if needed)
-- Install dependencies (if needed)
-- Start Docker containers (if needed)
-- Launch the Streamlit dashboard
-
+The run scripts will automatically:
+- ✅ Check if `.env` file exists and contains configuration
+- ✅ Check if Docker Desktop is running
+- ✅ Create virtual environment (if needed)
+- ✅ Install dependencies (if needed)
+- ✅ Start Docker containers (if needed)
+- ✅ Launch the Streamlit dashboard
 ---
 
 ### Manual Setup (Optional)
