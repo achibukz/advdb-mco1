@@ -63,7 +63,7 @@ st.sidebar.markdown("Balcita, Bukuhan, Cu, Dimaunahan")
 st.sidebar.markdown("STADVDB S17 | Group 12")
 
 # Placeholder for the main report
-st.write("Version 1.2.0")
+st.write("Version 1.2.1")
 
 # REPORT 1
 if report_category == "Loan Amount Trend":
@@ -403,7 +403,9 @@ elif report_category == "Transaction Types and Volume by District":
         st.markdown("### No District Selected")
         st.info("Please select a specific district to view transaction type distribution.")
     else:
-        # Create temporary table and query
+        # Multi-statement query using temporary table for optimal performance
+        # The execute_multi_statement_query function maintains a single connection
+        # across all statements, which is required for temporary tables to persist
         query = f"""
         DROP TEMPORARY TABLE IF EXISTS PreAggregatedFactTrans;
         

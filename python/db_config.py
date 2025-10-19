@@ -305,14 +305,18 @@ def fetch_data(query, ttl=3600):
             conn.close()
 
 
-def execute_multi_statement_query(query):
+def execute_multi_statement_query(query, ttl=3600):
     """
     Execute a multi-statement SQL query and return the final SELECT results.
     Useful for queries that create temporary tables before selecting data.
     Results are cached to avoid repeated database queries.
     
+    IMPORTANT: This function bypasses Streamlit's connection pooling to maintain
+    a single connection across all statements (required for temporary tables).
+    
     Args:
         query (str): Multi-statement SQL query (statements separated by semicolons)
+        ttl (int): Time-to-live for cached results in seconds (default: 3600)
         
     Returns:
         pandas.DataFrame: Results from the final SELECT statement (from cache or fresh)
@@ -336,25 +340,51 @@ def execute_multi_statement_query(query):
     # Cache miss or expired - fetch from database
     conn = None
     cursor = None
+    config = CLOUD_SQL_CONFIG if USE_CLOUD_SQL else LOCAL_CONFIG
+    config_type = "Cloud SQL" if USE_CLOUD_SQL else "Local"
     
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        # Establish direct connection (not using st.connection to maintain single session)
+        conn = mysql.connector.connect(
+            host=config["host"],
+            port=config["port"],
+            user=config["user"],
+            password=config["password"],
+            database=config["database"],
+            connect_timeout=30,  # Longer timeout for cloud connections
+            autocommit=True,  # Important for temporary tables
+            allow_local_infile=False,  # Security setting
+            consume_results=True  # Automatically consume unread results
+        )
+        
+        cursor = conn.cursor(dictionary=True, buffered=True)
         
         # Split the query into individual statements
         statements = [s.strip() for s in query.split(';') if s.strip()]
         
-        # Execute all statements except the last one
-        for statement in statements[:-1]:
-            cursor.execute(statement)
+        if len(statements) == 0:
+            raise Exception("No valid SQL statements found in query")
+        
+        # Execute all statements in sequence on the same connection
+        # This ensures temporary tables persist across statements
+        for i, statement in enumerate(statements[:-1]):
             try:
-                cursor.fetchall()  # Consume results to avoid "Unread result found" error
-            except:
-                pass  # Ignore if there are no results to fetch
+                cursor.execute(statement)
+                # Try to consume any results
+                try:
+                    cursor.fetchall()
+                except mysql.connector.errors.InterfaceError:
+                    pass  # No results to fetch (e.g., CREATE, DROP statements)
+            except mysql.connector.Error as stmt_err:
+                raise Exception(f"Failed to execute statement {i+1}/{len(statements)}: {str(stmt_err)}\nStatement: {statement[:200]}")
         
         # Execute the final SELECT statement and fetch results
-        cursor.execute(statements[-1])
-        result_df = pd.DataFrame(cursor.fetchall())
+        try:
+            cursor.execute(statements[-1])
+            data = cursor.fetchall()
+            result_df = pd.DataFrame(data)
+        except mysql.connector.Error as stmt_err:
+            raise Exception(f"Failed to execute final SELECT statement: {str(stmt_err)}\nStatement: {statements[-1][:200]}")
         
         # Store in cache
         if CACHE_ENABLED:
@@ -366,14 +396,38 @@ def execute_multi_statement_query(query):
         
         return result_df
     
+    except mysql.connector.Error as db_err:
+        error_code = db_err.errno if hasattr(db_err, 'errno') else 'Unknown'
+        error_msg = (
+            f"Database error in multi-statement query ({config_type})\n"
+            f"Host: {config['host']}:{config['port']}\n"
+            f"Database: {config['database']}\n"
+            f"Error Code: {error_code}\n"
+            f"Error: {str(db_err)}\n\n"
+            f"Query preview: {query[:300]}..."
+        )
+        raise Exception(error_msg)
+    
     except Exception as e:
-        raise Exception(f"Failed to execute multi-statement query: {str(e)}")
+        error_msg = (
+            f"Failed to execute multi-statement query on {config_type}\n"
+            f"Host: {config['host']}:{config['port']}\n"
+            f"Error type: {type(e).__name__}\n"
+            f"Error: {str(e)}"
+        )
+        raise Exception(error_msg)
     
     finally:
         if cursor:
-            cursor.close()
+            try:
+                cursor.close()
+            except:
+                pass
         if conn:
-            conn.close()
+            try:
+                conn.close()
+            except:
+                pass
 
 
 def test_connection():
