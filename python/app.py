@@ -63,7 +63,7 @@ st.sidebar.markdown("Balcita, Bukuhan, Cu, Dimaunahan")
 st.sidebar.markdown("STADVDB S17 | Group 12")
 
 # Placeholder for the main report
-st.write("Version 1.1.0")
+st.write("Version 1.2.0")
 
 # REPORT 1
 if report_category == "Loan Amount Trend":

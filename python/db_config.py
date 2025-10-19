@@ -67,7 +67,7 @@ _query_cache = {}  # In-memory cache storage
 
 # Database Configuration
 # Choose connection method by setting USE_CLOUD_SQL environment variable
-USE_CLOUD_SQL = str(_get_config_value('USE_CLOUD_SQL', 'False')).lower() == 'true'
+USE_CLOUD_SQL = str(_get_config_value('USE_CLOUD_SQL', 'True')).lower() == 'true'
 
 # Google Cloud SQL Configuration (loaded from Streamlit secrets or environment variables)
 CLOUD_SQL_CONFIG = {
