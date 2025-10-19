@@ -47,7 +47,7 @@ report_category = st.sidebar.selectbox("Select Report to View:",
 if report_category == "Loan Amount Trend":
     filter_option = st.sidebar.selectbox("Year:", ["All Years", "1993", "1994", "1995", "1996", "1997", "1998"])
 elif report_category == "Location Net Cash Flow":
-    filter_option = st.sidebar.selectbox("Region:", ["All Regions", "Prague", "central Bohemia", "south Bohemia", "west Bohemia", "north Bohemia", "east Bohemia", "south Moravia", "north Moravia"])   
+    filter_option = st.sidebar.selectbox("Region:", ["No Region Selected", "Prague", "central Bohemia", "south Bohemia", "west Bohemia", "north Bohemia", "east Bohemia", "south Moravia", "north Moravia"])   
 elif report_category == "Number of Payments and Total Amount":
     filter_option = st.sidebar.selectbox("Year:", ["All Years", "1993", "1994", "1995", "1996", "1997", "1998"])
     filter_option2 = st.sidebar.selectbox("Card Type:", ["All Cards", "Junior", "Classic", "Gold"])
@@ -63,7 +63,7 @@ st.sidebar.markdown("Balcita, Bukuhan, Cu, Dimaunahan")
 st.sidebar.markdown("STADVDB S17 | Group 12")
 
 # Placeholder for the main report
-st.write("Version 1.3.0")
+st.write("Version 1.3.1")
 
 # REPORT 1
 if report_category == "Loan Amount Trend":
@@ -162,7 +162,7 @@ if report_category == "Loan Amount Trend":
 
 # REPORT 2 - Location Net Cash Flow
 elif report_category == "Location Net Cash Flow":
-    if filter_option == "All Regions":
+    if filter_option == "No Region Selected":
         st.markdown("### No Region Selected")
         st.info("Please select a specific region to view district net cash flow data.")
     else:
