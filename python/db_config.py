@@ -4,6 +4,7 @@ Database Configuration and Connection Module
 This module handles all database connections for the Financial Reports Dashboard.
 It supports both local MySQL connections and Google Cloud SQL connections.
 Works with both Streamlit secrets and .env files.
+Uses st.connection() for better connection management when running in Streamlit.
 """
 
 import mysql.connector
@@ -19,6 +20,21 @@ load_dotenv()
 
 # Cloud SQL connector will be initialized only when needed
 _connector = None
+_streamlit_connection = None  # Cache for st.connection
+
+def _is_running_in_streamlit():
+    """
+    Check if code is running inside a Streamlit app.
+    
+    Returns:
+        bool: True if running in Streamlit, False otherwise
+    """
+    try:
+        import streamlit as st
+        return hasattr(st, 'secrets')
+    except ImportError:
+        return False
+
 
 def _get_config_value(key, default=''):
     """
@@ -165,39 +181,77 @@ def get_db_connection():
             port=config["port"],
             user=config["user"],
             password=config["password"],
-            database=config["database"]
+            database=config["database"],
+            connect_timeout=10  # Add timeout to prevent hanging
         )
         return conn
+    except mysql.connector.Error as db_err:
+        error_code = db_err.errno if hasattr(db_err, 'errno') else 'Unknown'
+        error_msg = (
+            f"Failed to connect to {config_type} database\n"
+            f"Host: {config['host']}:{config['port']}\n"
+            f"Database: {config['database']}\n"
+            f"User: {config['user']}\n"
+            f"Error Code: {error_code}\n"
+            f"Error: {str(db_err)}\n\n"
+            f"Common solutions:\n"
+            f"1. Check if the database server is running\n"
+            f"2. Verify host/port are correct\n"
+            f"3. Ensure user has proper permissions\n"
+            f"4. Check firewall/network settings\n"
+            f"5. For Cloud SQL: verify IP whitelist and public IP access"
+        )
+        raise Exception(error_msg)
     except Exception as e:
         raise Exception(f"Failed to connect to {config_type} database at {config['host']}:{config['port']}\n"
                       f"Error: {str(e)}")
 
 
-def fetch_data(query):
+def fetch_data(query, ttl=3600):
     """
     Execute a SQL query and return results as a pandas DataFrame.
-    Results are cached to avoid repeated database queries.
+    Uses st.connection() when running in Streamlit for better caching and connection management.
+    Falls back to direct MySQL connection when not in Streamlit.
     
     Args:
         query (str): SQL query to execute
+        ttl (int): Time-to-live for cached results in seconds (default: 3600 = 1 hour)
         
     Returns:
-        pandas.DataFrame: Query results (from cache or fresh from database)
+        pandas.DataFrame: Query results
         
     Raises:
         Exception: If query execution fails
     """
-    # Generate cache key
+    # Try to use Streamlit connection if available
+    if _is_running_in_streamlit():
+        try:
+            import streamlit as st
+            # Use st.connection for automatic caching and connection management
+            conn = st.connection('mysql', type='sql')
+            # Execute query with built-in caching (ttl in seconds)
+            return conn.query(query, ttl=ttl)
+        except Exception as e:
+            # If st.connection fails, fall back to manual connection
+            config_type = "Cloud SQL" if USE_CLOUD_SQL else "Local"
+            config = CLOUD_SQL_CONFIG if USE_CLOUD_SQL else LOCAL_CONFIG
+            error_msg = (
+                f"Streamlit connection failed for {config_type} "
+                f"({config['host']}:{config['port']}/{config['database']}): {str(e)}\n"
+                f"Error type: {type(e).__name__}\n\n"
+                f"Make sure your secrets.toml has [connections.mysql] configured correctly."
+            )
+            raise Exception(error_msg)
+    
+    # Not in Streamlit - use manual connection with custom caching
     cache_key = _generate_cache_key(query)
     
     # Check if valid cached result
     if CACHE_ENABLED and cache_key in _query_cache:
         cache_entry = _query_cache[cache_key]
         if _is_cache_valid(cache_entry):
-            # Return cached data (create a copy to prevent modifications)
             return cache_entry['data'].copy()
         else:
-            # Remove expired cache entry
             del _query_cache[cache_key]
     
     # Cache miss or expired - fetch from database
@@ -216,13 +270,30 @@ def fetch_data(query):
             _query_cache[cache_key] = {
                 'timestamp': datetime.now(),
                 'data': result_df.copy(),
-                'query': query[:100]  # Store first 100 chars for debugging
+                'query': query[:100]
             }
         
         return result_df
     
+    except mysql.connector.Error as db_err:
+        config = CLOUD_SQL_CONFIG if USE_CLOUD_SQL else LOCAL_CONFIG
+        config_type = "Cloud SQL" if USE_CLOUD_SQL else "Local"
+        error_msg = (
+            f"Database error while fetching data from {config_type} "
+            f"({config['host']}:{config['port']}/{config['database']}): {str(db_err)}\n"
+            f"Query: {query[:200]}..."
+        )
+        raise Exception(error_msg)
+    
     except Exception as e:
-        raise Exception(f"Failed to fetch data: {str(e)}")
+        config = CLOUD_SQL_CONFIG if USE_CLOUD_SQL else LOCAL_CONFIG
+        config_type = "Cloud SQL" if USE_CLOUD_SQL else "Local"
+        error_msg = (
+            f"Failed to fetch data from {config_type} "
+            f"({config['host']}:{config['port']}/{config['database']}): {str(e)}\n"
+            f"Error type: {type(e).__name__}"
+        )
+        raise Exception(error_msg)
     
     finally:
         if cursor:
