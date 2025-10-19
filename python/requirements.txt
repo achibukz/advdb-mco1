@@ -36,7 +36,6 @@ jsonschema-specifications==2025.9.1
 MarkupSafe==3.0.3
 multidict==6.7.0
 mysql-connector-python==9.4.0
-mysqlclient==2.2.7
 narwhals==2.8.0
 numpy==2.3.4
 oauthlib==3.3.1
