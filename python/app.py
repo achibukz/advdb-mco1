@@ -1,25 +1,9 @@
 import streamlit as st
 import pandas as pd
-import mysql.connector
 import altair as alt
 
-# ------------------------------------------------
-def get_db_connection():
-    return mysql.connector.connect(
-        host="localhost", 
-        port=3307,         
-        user="warehouse_user",
-        password="rootpass",
-        database="warehouse_db"
-    )
-
-def fetch_data(query):
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute(query)
-    data = cursor.fetchall()
-    conn.close()
-    return pd.DataFrame(data)
+# Import database functions from separate config file
+from db_config import fetch_data, execute_multi_statement_query, clear_cache, get_cache_stats
 
 # Fetch district names for dropdown (cached to avoid repeated queries)
 @st.cache_data
@@ -455,27 +439,8 @@ elif report_category == "Transaction Types and Volume by District":
         GROUP BY dd.district_id, dd.district_name, dd.region;
         """
         
-        # Execute multi-statement query
-        conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
-        
-        # Execute statements separately
-        statements = [s.strip() for s in query.split(';') if s.strip()]
-        
-        # Execute all statements except the last one (which is the SELECT)
-        for statement in statements[:-1]:
-            cursor.execute(statement)
-            try:
-                cursor.fetchall()  # Consume any results to avoid "Unread result found" error
-            except:
-                pass  # Ignore if there are no results to fetch
-        
-        # Execute the final SELECT statement and fetch results
-        cursor.execute(statements[-1])
-        data = pd.DataFrame(cursor.fetchall())
-        
-        cursor.close()
-        conn.close()
+        # Execute multi-statement query using helper function
+        data = execute_multi_statement_query(query)
         
         if not data.empty and len(data) > 0:
             row = data.iloc[0]

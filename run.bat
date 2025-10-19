@@ -4,6 +4,32 @@ echo Financial Dataset Dashboard Launcher
 echo ========================================
 echo.
 
+REM Check if .env file exists and contains content
+if not exist ".env" (
+    echo.
+    echo [ERROR] .env file not found!
+    echo.
+    echo Please create a .env file in the root folder and fill it with the required configuration.
+    echo.
+    pause
+    exit /b 1
+)
+
+REM Check if .env file is empty
+for %%A in (".env") do set env_size=%%~zA
+if %env_size% EQU 0 (
+    echo.
+    echo [ERROR] .env file is empty!
+    echo.
+    echo Please fill the .env file with the required configuration information.
+    echo.
+    pause
+    exit /b 1
+)
+
+echo .env file found and contains configuration.
+echo.
+
 REM Check if virtual environment exists
 if not exist ".venv\Scripts\activate.bat" (
     echo Virtual environment not found!
