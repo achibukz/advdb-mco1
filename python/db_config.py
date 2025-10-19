@@ -227,8 +227,10 @@ def fetch_data(query, ttl=3600):
     if _is_running_in_streamlit():
         try:
             import streamlit as st
+            # Choose connection based on USE_CLOUD_SQL setting
+            conn_name = 'mysql' if USE_CLOUD_SQL else 'mysql_local'
             # Use st.connection for automatic caching and connection management
-            conn = st.connection('mysql', type='sql')
+            conn = st.connection(conn_name, type='sql')
             # Execute query with built-in caching (ttl in seconds)
             return conn.query(query, ttl=ttl)
         except Exception as e:
@@ -239,7 +241,8 @@ def fetch_data(query, ttl=3600):
                 f"Streamlit connection failed for {config_type} "
                 f"({config['host']}:{config['port']}/{config['database']}): {str(e)}\n"
                 f"Error type: {type(e).__name__}\n\n"
-                f"Make sure your secrets.toml has [connections.mysql] configured correctly."
+                f"Make sure your secrets.toml has [connections.{conn_name}] configured correctly.\n"
+                f"Current USE_CLOUD_SQL setting: {USE_CLOUD_SQL}"
             )
             raise Exception(error_msg)
     
