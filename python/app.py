@@ -101,6 +101,10 @@ if report_category == "Loan Amount Trend":
                 height=400
             )
             st.altair_chart(chart, use_container_width=True)
+            
+            # Display data table below
+            st.write("Detailed Data:")
+            st.dataframe(data, use_container_width=True)
     else:
         # Drill down into specific year by month
         selected_year = int(filter_option)
