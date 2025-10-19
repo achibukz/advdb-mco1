@@ -3,7 +3,7 @@ import pandas as pd
 import altair as alt
 
 # Import database functions from separate config file
-from db_config import fetch_data, execute_multi_statement_query, clear_cache, get_cache_stats
+from db_config import fetch_data, clear_cache, get_cache_stats
 
 # Fetch district names for dropdown (cached to avoid repeated queries)
 @st.cache_data
@@ -63,7 +63,7 @@ st.sidebar.markdown("Balcita, Bukuhan, Cu, Dimaunahan")
 st.sidebar.markdown("STADVDB S17 | Group 12")
 
 # Placeholder for the main report
-st.write("Version 1.2.1")
+st.write("Version 1.3.0")
 
 # REPORT 1
 if report_category == "Loan Amount Trend":
@@ -403,46 +403,29 @@ elif report_category == "Transaction Types and Volume by District":
         st.markdown("### No District Selected")
         st.info("Please select a specific district to view transaction type distribution.")
     else:
-        # Multi-statement query using temporary table for optimal performance
-        # The execute_multi_statement_query function maintains a single connection
-        # across all statements, which is required for temporary tables to persist
+        # Direct aggregation query - works with connection pooling and cloud deployment
+        # Single statement compatible with st.connection() and Streamlit's caching
         query = f"""
-        DROP TEMPORARY TABLE IF EXISTS PreAggregatedFactTrans;
-        
-        CREATE TEMPORARY TABLE PreAggregatedFactTrans AS
-        SELECT 
-            clientAcc_id,
-            SUM(CASE WHEN operation = 'Credit in Cash' THEN 1 ELSE 0 END) AS credit_in_cash,
-            SUM(CASE WHEN operation = 'Collection from Another Bank' THEN 1 ELSE 0 END) AS collection_from_bank,
-            SUM(CASE WHEN operation = 'Withdrawal in Cash' THEN 1 ELSE 0 END) AS withdrawal_in_cash,
-            SUM(CASE WHEN operation = 'Remittance to Another Bank' THEN 1 ELSE 0 END) AS remittance_to_bank,
-            SUM(CASE WHEN operation = 'Credit Card Withdrawal' THEN 1 ELSE 0 END) AS credit_card_withdrawal,
-            COUNT(trans_id) AS total_transactions,
-            ROUND(AVG(amount), 2) AS avg_transaction_amount,
-            ROUND(SUM(amount), 2) AS total_money_transferred
-        FROM FactTrans
-        GROUP BY clientAcc_id;
-        
         SELECT 
             dd.district_name,
             dd.region,
-            SUM(pt.credit_in_cash) AS credit_in_cash,
-            SUM(pt.collection_from_bank) AS collection_from_bank,
-            SUM(pt.withdrawal_in_cash) AS withdrawal_in_cash,
-            SUM(pt.remittance_to_bank) AS remittance_to_bank,
-            SUM(pt.credit_card_withdrawal) AS credit_card_withdrawal,
-            SUM(pt.total_transactions) AS total_transactions,
-            ROUND(AVG(pt.avg_transaction_amount), 2) AS avg_transaction_amount,
-            ROUND(SUM(pt.total_money_transferred), 2) AS total_money_transferred
-        FROM PreAggregatedFactTrans pt
-        JOIN DimClientAccount dca ON pt.clientAcc_id = dca.clientAcc_id
+            SUM(CASE WHEN ft.operation = 'Credit in Cash' THEN 1 ELSE 0 END) AS credit_in_cash,
+            SUM(CASE WHEN ft.operation = 'Collection from Another Bank' THEN 1 ELSE 0 END) AS collection_from_bank,
+            SUM(CASE WHEN ft.operation = 'Withdrawal in Cash' THEN 1 ELSE 0 END) AS withdrawal_in_cash,
+            SUM(CASE WHEN ft.operation = 'Remittance to Another Bank' THEN 1 ELSE 0 END) AS remittance_to_bank,
+            SUM(CASE WHEN ft.operation = 'Credit Card Withdrawal' THEN 1 ELSE 0 END) AS credit_card_withdrawal,
+            COUNT(ft.trans_id) AS total_transactions,
+            ROUND(AVG(ft.amount), 2) AS avg_transaction_amount,
+            ROUND(SUM(ft.amount), 2) AS total_money_transferred
+        FROM FactTrans ft
+        JOIN DimClientAccount dca ON ft.clientAcc_id = dca.clientAcc_id
         JOIN DimDistrict dd ON dca.distCli_id = dd.district_id
         WHERE dd.district_name = '{filter_option}'
         GROUP BY dd.district_id, dd.district_name, dd.region;
         """
         
-        # Execute multi-statement query using helper function
-        data = execute_multi_statement_query(query)
+        # Use standard fetch_data - works with st.connection() and cloud deployment
+        data = fetch_data(query)
         
         if not data.empty and len(data) > 0:
             row = data.iloc[0]
