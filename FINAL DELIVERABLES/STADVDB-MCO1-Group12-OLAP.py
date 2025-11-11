@@ -100,7 +100,7 @@ if report_category == "Loan Amount Trend":
             ).properties(
                 height=400
             )
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width='stretch')
             
             # Display data table below
             st.write("Detailed Data:")
@@ -159,7 +159,7 @@ if report_category == "Loan Amount Trend":
             ).properties(
                 height=400
             )
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width='stretch')
 
             st.write("Detailed Data:")
             st.dataframe(data, use_container_width=True)
@@ -207,7 +207,7 @@ elif report_category == "Location Net Cash Flow":
                 height=max(400, len(data) * 25)  # Dynamic height based on number of districts
             )
             
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width='stretch')
             
             # Display data table below
             st.write("Detailed Data:")
@@ -305,7 +305,7 @@ elif report_category == "Number of Payments and Total Amount":
                 height=400
             )
             
-            st.altair_chart(chart, use_container_width=True)
+            st.altair_chart(chart, width='stretch')
             
             # Display data table below
             st.write("Detailed Data:")
@@ -386,7 +386,7 @@ elif report_category == "Loan Status and Loan Volume by Region":
             height=400
         )
         
-        st.altair_chart(chart, use_container_width=True)
+        st.altair_chart(chart, width='stretch')
         
         # Display summary statistics
         st.write("Summary Statistics:")
@@ -487,7 +487,7 @@ elif report_category == "Transaction Types and Volume by District":
                     title=f"Transaction Type Distribution"
                 )
                 
-                st.altair_chart(chart, use_container_width=True)
+                st.altair_chart(chart, width='stretch')
                 
                 # Display operations breakdown table
                 st.write("Transaction Breakdown:")

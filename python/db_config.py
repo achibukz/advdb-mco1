@@ -122,44 +122,6 @@ def _is_cache_valid(cache_entry):
     age = (datetime.now() - timestamp).total_seconds()
     return age < CACHE_TTL_SECONDS
 
-
-def clear_cache():
-    """
-    Clear all cached queries.
-    Useful for forcing fresh data from the database.
-    """
-    global _query_cache
-    _query_cache = {}
-    print("Query cache cleared successfully.")
-
-
-def get_cache_stats():
-    """
-    Get statistics about the current cache.
-    
-    Returns:
-        dict: Cache statistics including size, entries, and memory usage
-    """
-    total_entries = len(_query_cache)
-    valid_entries = sum(1 for entry in _query_cache.values() if _is_cache_valid(entry))
-    
-    # Calculate approximate memory usage
-    try:
-        cache_size_bytes = len(pickle.dumps(_query_cache))
-        cache_size_mb = cache_size_bytes / (1024 * 1024)
-    except:
-        cache_size_mb = 0
-    
-    return {
-        'total_entries': total_entries,
-        'valid_entries': valid_entries,
-        'expired_entries': total_entries - valid_entries,
-        'cache_size_mb': round(cache_size_mb, 2),
-        'cache_enabled': CACHE_ENABLED,
-        'ttl_seconds': CACHE_TTL_SECONDS
-    }
-
-
 def get_db_connection():
     """
     Establish and return a database connection.
