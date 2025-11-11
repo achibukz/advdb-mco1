@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 # Database Configuration
 SOURCE_DB_CONFIG = {
     'host': 'localhost',
-    'port': 3306,
+    'port': 3304,
     'user': 'root',
     'password': 'rootpass',
     'database': 'financedata',
@@ -26,7 +26,7 @@ SOURCE_DB_CONFIG = {
 
 WAREHOUSE_DB_CONFIG = {
     'host': 'localhost',
-    'port': 3307,
+    'port': 3305,
     'user': 'root',
     'password': 'rootpass',
     'database': 'warehouse_db',

@@ -21,8 +21,8 @@ A MySQL-based data warehouse project using Docker for containerization.
 
 ## Services
 
-- **mysql-source**: Source OLTP database (port 3306)
-- **mysql-warehouse**: Data warehouse OLAP database (port 3307)  
+- **mysql-source**: Source OLTP database (port 3304)
+- **mysql-warehouse**: Data warehouse OLAP database (port 3305)  
 - **etl-service**: Python ETL service container
 
 ## Getting Started
@@ -56,12 +56,12 @@ A MySQL-based data warehouse project using Docker for containerization.
 
 5. **Connect to source database:**
    ```bash
-   mysql -h localhost -P 3306 -u app_user -prootpass financedata
+   mysql -h localhost -P 3304 -u app_user -prootpass financedata
    ```
 
 6. **Connect to warehouse database:**
    ```bash
-   mysql -h localhost -P 3307 -u warehouse_user -prootpass warehouse_db
+   mysql -h localhost -P 3305 -u warehouse_user -prootpass warehouse_db
    ```
 
 ## Dataset Setup
@@ -83,7 +83,7 @@ This project requires a SQL dataset file for the source database.
 
 ### Source Database (OLTP)
 - Host: localhost
-- Port: 3306
+- Port: 3304
 - Database: financedata
 - User: app_user
 - Password: rootpass
@@ -91,7 +91,7 @@ This project requires a SQL dataset file for the source database.
 
 ### Warehouse Database (OLAP)
 - Host: localhost
-- Port: 3307
+- Port: 3305
 - Database: warehouse_db
 - User: warehouse_user
 - Password: rootpass

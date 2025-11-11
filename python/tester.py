@@ -12,7 +12,7 @@ from typing import List, Dict, Tuple
 import json
 
 class QueryBenchmark:
-    def __init__(self, host='localhost', port=3307, user='root', password='rootpass', database='warehouse_db'):
+    def __init__(self, host='localhost', port=3305, user='root', password='rootpass', database='warehouse_db'):
         """Initialize database connection"""
         self.connection_params = {
             'host': host,

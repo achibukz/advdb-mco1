@@ -8,14 +8,14 @@ This document provides a comprehensive explanation of the ETL (Extract, Transfor
 ## **🏗️ Architecture Overview**
 
 ### **Source System (OLTP)**
-- **Database**: `financedata` (MySQL 9.4.0)
-- **Port**: 3306
+- **Database**: `financedata` (MySQL 8.4.0)
+- **Port**: 3304
 - **Structure**: Normalized relational database with 9 tables
 - **Purpose**: Operational transaction processing
 
 ### **Target System (OLAP)**  
-- **Database**: `warehouse_db` (MySQL 9.4.0)
-- **Port**: 3307
+- **Database**: `warehouse_db` (MySQL 8.4.0)
+- **Port**: 3305
 - **Structure**: Star schema with 4 dimensions + 3 facts
 - **Purpose**: Analytical processing and business intelligence
 
@@ -357,7 +357,7 @@ ORDER BY order_id
 ### **Connection Management**
 - **Persistent Connections**: Single connection per database throughout pipeline
 - **SSL Configuration**: SSL disabled for local Docker environment
-- **Authentication**: Handles MySQL 9.4.0 `caching_sha2_password` with cryptography
+- **Authentication**: Handles MySQL 8.4.0 `caching_sha2_password` with cryptography
 - **Transaction Management**: Commit/rollback for data integrity
 
 ### **Performance Optimizations**

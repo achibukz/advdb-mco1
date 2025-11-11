@@ -72,7 +72,7 @@ USE_CLOUD_SQL = str(_get_config_value('USE_CLOUD_SQL', 'True')).lower() == 'true
 # Google Cloud SQL Configuration (loaded from Streamlit secrets or environment variables)
 CLOUD_SQL_CONFIG = {
     "host": _get_config_value('CLOUD_DB_HOST'),
-    "port": int(_get_config_value('CLOUD_DB_PORT', '3306')),
+    "port": int(_get_config_value('CLOUD_DB_PORT', '3304')),
     "user": _get_config_value('CLOUD_DB_USER'),
     "password": _get_config_value('CLOUD_DB_PASSWORD'),
     "database": _get_config_value('CLOUD_DB_NAME')
@@ -81,7 +81,7 @@ CLOUD_SQL_CONFIG = {
 # Direct IP Connection Configuration (loaded from Streamlit secrets or environment variables)
 LOCAL_CONFIG = {
     "host": _get_config_value('LOCAL_DB_HOST'),
-    "port": int(_get_config_value('LOCAL_DB_PORT', '3306')),
+    "port": int(_get_config_value('LOCAL_DB_PORT', '3304')),
     "user": _get_config_value('LOCAL_DB_USER'),
     "password": _get_config_value('LOCAL_DB_PASSWORD'),
     "database": _get_config_value('LOCAL_DB_NAME')
